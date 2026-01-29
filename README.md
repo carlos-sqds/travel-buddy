@@ -107,6 +107,84 @@ TRMNL_WEBHOOK_URL=https://usetrmnl.com/api/custom_plugins/...
 NGROK_AUTH_TOKEN=your-token
 ```
 
+## Contributing
+
+Contributions are welcome! Here's how to get started:
+
+### Setup
+
+```bash
+# Fork and clone the repo
+git clone https://github.com/YOUR_USERNAME/travel-buddy.git
+cd travel-buddy
+
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
+```
+
+### Development Workflow
+
+1. Create a feature branch:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. Make your changes
+
+3. Run all checks before committing:
+   ```bash
+   npm run lint        # Check code style
+   npm run typecheck   # Check types
+   npm run test        # Run tests (44 tests)
+   npm run build       # Verify production build
+   ```
+
+4. Commit and push:
+   ```bash
+   git add .
+   git commit -m "feat: description of your change"
+   git push origin feature/your-feature-name
+   ```
+
+5. Open a Pull Request
+
+### Key Areas to Contribute
+
+| Area | Files | Description |
+|------|-------|-------------|
+| **Real Flight API** | `src/lib/flight-api.ts` (new) | Replace mock data with SerpApi/Skyscanner |
+| **More Airlines** | `src/lib/mock-flight-data.ts` | Add airlines, routes, booking sites |
+| **UI Improvements** | `src/components/*` | Better styling, charts, mobile support |
+| **TRMNL Templates** | `TRMNL_SETUP.md` | Alternative layouts (half, quadrant) |
+| **Database** | `src/lib/db.ts` | Migrate to Supabase/Postgres |
+| **Tests** | `src/__tests__/*` | Increase coverage |
+
+### Code Style
+
+- TypeScript strict mode enabled
+- ESLint with Next.js config
+- Prefer named exports
+- Keep components small and focused
+- Add tests for new functionality
+
+### Commit Messages
+
+Follow conventional commits:
+- `feat:` new feature
+- `fix:` bug fix
+- `docs:` documentation
+- `test:` adding tests
+- `refactor:` code change without feature/fix
+
+### Need Help?
+
+- Check existing issues for context
+- Open an issue to discuss larger changes before implementing
+- Ask questions in PR comments
+
 ## License
 
 MIT

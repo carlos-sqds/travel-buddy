@@ -1,4 +1,4 @@
-import { getDb, seedDefaults } from './db';
+import { getDb, seedDefaultsForUser } from './db';
 import type { PriceHistory, AppConfig, Destination } from '@/types';
 import {
   generateFlightPrice,
@@ -7,14 +7,14 @@ import {
   getAirportByCode,
 } from './mock-flight-data';
 
-export function getConfig(): AppConfig {
+export function getConfig(userId: string): AppConfig {
   const db = getDb();
-  seedDefaults();
+  seedDefaultsForUser(userId);
   
-  const homeRow = db.prepare('SELECT value FROM config WHERE key = ?').get('home_airport') as { value: string } | undefined;
-  const webhookRow = db.prepare('SELECT value FROM config WHERE key = ?').get('trmnl_webhook_url') as { value: string } | undefined;
+  const homeRow = db.prepare('SELECT value FROM config WHERE user_id = ? AND key = ?').get(userId, 'home_airport') as { value: string } | undefined;
+  const webhookRow = db.prepare('SELECT value FROM config WHERE user_id = ? AND key = ?').get(userId, 'trmnl_webhook_url') as { value: string } | undefined;
   
-  const destinations = db.prepare('SELECT code FROM destinations ORDER BY added_at').all() as { code: string }[];
+  const destinations = db.prepare('SELECT code FROM destinations WHERE user_id = ? ORDER BY added_at').all(userId) as { code: string }[];
   
   return {
     homeAirport: homeRow?.value || 'BER',
@@ -23,48 +23,49 @@ export function getConfig(): AppConfig {
   };
 }
 
-export function setHomeAirport(code: string): void {
+export function setHomeAirport(userId: string, code: string): void {
   const db = getDb();
   db.prepare(`
-    INSERT INTO config (key, value) VALUES ('home_airport', ?)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value
-  `).run(code);
+    INSERT INTO config (user_id, key, value) VALUES (?, 'home_airport', ?)
+    ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value
+  `).run(userId, code);
 }
 
-export function setTrmnlWebhookUrl(url: string): void {
+export function setTrmnlWebhookUrl(userId: string, url: string): void {
   const db = getDb();
   db.prepare(`
-    INSERT INTO config (key, value) VALUES ('trmnl_webhook_url', ?)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value
-  `).run(url);
+    INSERT INTO config (user_id, key, value) VALUES (?, 'trmnl_webhook_url', ?)
+    ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value
+  `).run(userId, url);
 }
 
-export function addDestination(code: string): boolean {
+export function addDestination(userId: string, code: string): boolean {
   const db = getDb();
   const airport = getAirportByCode(code);
   if (!airport) return false;
   
   try {
-    db.prepare('INSERT OR IGNORE INTO destinations (code) VALUES (?)').run(code);
+    db.prepare('INSERT OR IGNORE INTO destinations (user_id, code) VALUES (?, ?)').run(userId, code);
     return true;
   } catch {
     return false;
   }
 }
 
-export function removeDestination(code: string): boolean {
+export function removeDestination(userId: string, code: string): boolean {
   const db = getDb();
-  const result = db.prepare('DELETE FROM destinations WHERE code = ?').run(code);
+  const result = db.prepare('DELETE FROM destinations WHERE user_id = ? AND code = ?').run(userId, code);
   return result.changes > 0;
 }
 
-export function getDestinations(): string[] {
+export function getDestinations(userId: string): string[] {
   const db = getDb();
-  const rows = db.prepare('SELECT code FROM destinations ORDER BY added_at').all() as { code: string }[];
+  const rows = db.prepare('SELECT code FROM destinations WHERE user_id = ? ORDER BY added_at').all(userId) as { code: string }[];
   return rows.map(r => r.code);
 }
 
 export function recordPrice(
+  userId: string,
   destinationCode: string,
   price: number,
   currency: string,
@@ -73,27 +74,27 @@ export function recordPrice(
 ): void {
   const db = getDb();
   db.prepare(`
-    INSERT INTO price_history (destination_code, price, currency, airline, booking_site)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(destinationCode, price, currency, airline, bookingSite);
+    INSERT INTO price_history (user_id, destination_code, price, currency, airline, booking_site)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(userId, destinationCode, price, currency, airline, bookingSite);
 }
 
-export function getPriceHistory(destinationCode: string, days: number = 30): PriceHistory[] {
+export function getPriceHistory(userId: string, destinationCode: string, days: number = 30): PriceHistory[] {
   const db = getDb();
   const rows = db.prepare(`
     SELECT id, destination_code as destinationCode, price, airline, booking_site as bookingSite, recorded_at as timestamp
     FROM price_history
-    WHERE destination_code = ?
+    WHERE user_id = ? AND destination_code = ?
     AND recorded_at >= datetime('now', '-' || ? || ' days')
     ORDER BY recorded_at ASC
-  `).all(destinationCode, days) as PriceHistory[];
+  `).all(userId, destinationCode, days) as PriceHistory[];
   
   return rows;
 }
 
-export function getDestinationWithPrices(homeAirport: string, destinationCode: string): Destination {
+export function getDestinationWithPrices(userId: string, homeAirport: string, destinationCode: string): Destination {
   const airport = getAirportByCode(destinationCode);
-  const dbHistory = getPriceHistory(destinationCode, 30);
+  const dbHistory = getPriceHistory(userId, destinationCode, 30);
   
   let currentPrice: number | null = null;
   let trend: string | null = null;
@@ -136,11 +137,11 @@ export function getDestinationWithPrices(homeAirport: string, destinationCode: s
   };
 }
 
-export function refreshPrices(homeAirport: string): void {
-  const destinations = getDestinations();
+export function refreshPrices(userId: string, homeAirport: string): void {
+  const destinations = getDestinations(userId);
   
   for (const dest of destinations) {
     const price = generateFlightPrice(homeAirport, dest);
-    recordPrice(dest, price.price, price.currency, price.airline, price.bookingSite);
+    recordPrice(userId, dest, price.price, price.currency, price.airline, price.bookingSite);
   }
 }

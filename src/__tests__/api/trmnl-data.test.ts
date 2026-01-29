@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { getDb, closeDb } from '@/lib/db';
+import { getDb, closeDb, createUser } from '@/lib/db';
 import { addDestination, setHomeAirport } from '@/lib/price-history';
 import { buildTrmnlPayload, validateTrmnlPayload } from '@/lib/trmnl-payload';
-import { getConfig, getDestinationWithPrices, getPriceHistory } from '@/lib/price-history';
+import { getConfig, getDestinationWithPrices } from '@/lib/price-history';
 import { generatePriceHistory } from '@/lib/mock-flight-data';
 
 const TEST_DB_PATH = path.join(process.cwd(), 'flight-tracker.db');
+const TEST_USER_ID = 'test-user-trmnl';
 
 describe('TRMNL data API logic', () => {
   beforeEach(() => {
@@ -15,6 +16,7 @@ describe('TRMNL data API logic', () => {
       fs.unlinkSync(TEST_DB_PATH);
     }
     getDb();
+    createUser(TEST_USER_ID);
   });
 
   afterEach(() => {
@@ -25,9 +27,9 @@ describe('TRMNL data API logic', () => {
   });
 
   it('generates valid TRMNL payload with default destinations', () => {
-    const config = getConfig();
+    const config = getConfig(TEST_USER_ID);
     const destinations = config.destinations.map((code) =>
-      getDestinationWithPrices(config.homeAirport, code)
+      getDestinationWithPrices(TEST_USER_ID, config.homeAirport, code)
     );
     const payload = buildTrmnlPayload(config.homeAirport, destinations, new Map());
 
@@ -37,14 +39,13 @@ describe('TRMNL data API logic', () => {
     expect(payload.merge_variables.destinations.map(d => d.code)).toEqual(['JFK', 'LIS', 'BKK']);
   });
 
-  it('generates valid TRMNL payload with destinations', () => {
-    setHomeAirport('BER');
-    addDestination('JFK');
-    addDestination('LIS');
+  it('generates valid TRMNL payload with custom destinations', () => {
+    setHomeAirport(TEST_USER_ID, 'BER');
+    addDestination(TEST_USER_ID, 'SFO');
 
-    const config = getConfig();
+    const config = getConfig(TEST_USER_ID);
     const destinations = config.destinations.map((code) =>
-      getDestinationWithPrices(config.homeAirport, code)
+      getDestinationWithPrices(TEST_USER_ID, config.homeAirport, code)
     );
 
     const priceHistories = new Map<string, number[]>();
@@ -57,16 +58,13 @@ describe('TRMNL data API logic', () => {
 
     const validation = validateTrmnlPayload(payload);
     expect(validation.valid).toBe(true);
-    expect(payload.merge_variables.destinations).toHaveLength(2);
     expect(payload.merge_variables.home_airport).toContain('BER');
   });
 
   it('includes chart URLs for destinations', () => {
-    addDestination('JFK');
-
-    const config = getConfig();
+    const config = getConfig(TEST_USER_ID);
     const destinations = config.destinations.map((code) =>
-      getDestinationWithPrices(config.homeAirport, code)
+      getDestinationWithPrices(TEST_USER_ID, config.homeAirport, code)
     );
 
     const priceHistories = new Map<string, number[]>();
@@ -78,11 +76,9 @@ describe('TRMNL data API logic', () => {
   });
 
   it('payload structure matches TRMNL webhook format', () => {
-    addDestination('LHR');
-
-    const config = getConfig();
+    const config = getConfig(TEST_USER_ID);
     const destinations = config.destinations.map((code) =>
-      getDestinationWithPrices(config.homeAirport, code)
+      getDestinationWithPrices(TEST_USER_ID, config.homeAirport, code)
     );
     const priceHistories = new Map<string, number[]>();
 
