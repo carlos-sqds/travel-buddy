@@ -1,0 +1,32 @@
+# Apex
+.apex-hooks/
+results/runs/
+*.apex-backup
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env.local
+.env*.local
+
+# Database
+*.db
+*.sqlite
+
+# ngrok
+.ngrok.yml
+
+# PM2
+.pm2/
+logs/
+
+# Misc
+.DS_Store
+*.log
+npm-debug.log*

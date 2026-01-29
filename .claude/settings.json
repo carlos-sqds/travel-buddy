@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); CMD=$(echo \"$INPUT\" | jq -r '.tool_input.command // empty' 2>/dev/null); if [[ ! \"$CMD\" =~ ^git[[:space:]]+commit ]]; then exit 0; fi; STAGED=$(git diff --cached --name-only 2>/dev/null); if ! echo \"$STAGED\" | grep -qE '^(\\.claude/|\\.factory/|AGENTS\\.md|CLAUDE\\.md)'; then exit 0; fi; ERRORS=''; if [ -d .claude/skills ] && [ -d .factory/skills ]; then if ! diff -rq .claude/skills .factory/skills >/dev/null 2>&1; then ERRORS=\"Skills differ between .claude/ and .factory/\"; fi; fi; if [ -n \"$ERRORS\" ]; then echo \"Harness parity issue: $ERRORS\"; echo \"Run apex sync to fix before committing.\"; exit 2; fi; exit 0",
+            "timeout": 10000,
+            "_hookId": "pre-commit-harness-parity"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/save-session.sh",
+            "suppressOutput": true,
+            "_hookId": "session-logging"
+          }
+        ]
+      }
+    ]
+  }
+}

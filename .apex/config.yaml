@@ -1,0 +1,16 @@
+version: 0.1.0
+framework:
+  version: 0.5.2
+  synced_at: 2026-01-29T18:31:30.506Z
+harnesses:
+  claude:
+    enabled: true
+    settingsDir: .claude
+    activityLogDir: agent
+  factory:
+    enabled: true
+    settingsDir: .factory
+    activityLogDir: agent
+extensions: []
+project:
+  name: .
