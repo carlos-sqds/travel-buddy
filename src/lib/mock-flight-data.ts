@@ -63,6 +63,80 @@ export function getBasePrice(from: string, to: string): number {
   return BASE_PRICES[key] || BASE_PRICES[reverseKey] || 300;
 }
 
+export const MOCK_SERPAPI_FLIGHT = {
+  flights: [
+    {
+      departure_airport: {
+        name: "Berlin Brandenburg Airport",
+        id: "BER",
+        time: "2026-03-03 08:40"
+      },
+      arrival_airport: {
+        name: "Helsinki Airport",
+        id: "HEL",
+        time: "2026-03-03 11:35"
+      },
+      duration: 115,
+      airplane: "Airbus A320",
+      airline: "Finnair",
+      airline_logo: "https://www.gstatic.com/flights/airline_logos/70px/AY.png",
+      travel_class: "Economy",
+      flight_number: "AY 1432",
+      legroom: "31 in",
+      extensions: [
+        "Average legroom (31 in)",
+        "Wi-Fi for a fee",
+        "Carbon emissions estimate: 128 kg"
+      ]
+    },
+    {
+      departure_airport: {
+        name: "Helsinki Airport",
+        id: "HEL",
+        time: "2026-03-03 17:35"
+      },
+      arrival_airport: {
+        name: "Incheon International Airport",
+        id: "ICN",
+        time: "2026-03-04 12:25"
+      },
+      duration: 710,
+      airplane: "Airbus A350",
+      airline: "Finnair",
+      airline_logo: "https://www.gstatic.com/flights/airline_logos/70px/AY.png",
+      travel_class: "Economy",
+      flight_number: "AY 41",
+      legroom: "31 in",
+      extensions: [
+        "Average legroom (31 in)",
+        "Wi-Fi for a fee",
+        "In-seat USB outlet",
+        "On-demand video",
+        "Carbon emissions estimate: 507 kg"
+      ],
+      overnight: true
+    }
+  ],
+  layovers: [
+    {
+      duration: 360,
+      name: "Helsinki Airport",
+      id: "HEL"
+    }
+  ],
+  total_duration: 1185,
+  carbon_emissions: {
+    this_flight: 636000,
+    typical_for_this_route: 595000,
+    difference_percent: 7
+  },
+  price: 653,
+  type: "One way",
+  airline_logo: "https://www.gstatic.com/flights/airline_logos/70px/AY.png",
+  booking_token: "WyJDalJJWWsxMVNIQkNlVUZGUkZWQlJHdFVWSGRDUnkwdExTMHRMUzB0TFMxNWJHdDFNa0ZCUVVGQlIydzNjbVJKVFZVMFQwZEJFZ3RCV1RFME16SjhRVmswTVJvTENPUDlBeEFDR2dOVlUwUTRISERqL1FNPSIsW1siQkVSIiwiMjAyNi0wMy0wMyIsIkhFTCIsbnVsbCwiQVkiLCIxNDMyIl0sWyJIRUwiLCIyMDI2LTAzLTAzIiwiSUNOIixudWxsLCJBWSIsIjQxIl1dXQ=="
+};
+
+
 export function generateFlightPrice(
   from: string,
   to: string,
